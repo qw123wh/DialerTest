@@ -56,6 +56,14 @@ import com.fissy.dialer.widget.EmptyContentView.OnEmptyViewActionButtonClickedLi
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+
+// indicatorfastscroll imports
+import com.reddit.indicatorfastscroll.FastScrollerView;
+import com.reddit.indicatorfastscroll.FastScrollerThumbView;
+import com.reddit.indicatorfastscroll.FastScrollItemIndicator;
+import kotlin.jvm.functions.Function1;
 
 /**
  * Fragment containing a list of all contacts.
@@ -68,12 +76,18 @@ public class ContactsFragment extends Fragment
     public static final int READ_CONTACTS_PERMISSION_REQUEST_CODE = 1;
     private static final String EXTRA_HEADER = "extra_header";
     private static final String EXTRA_HAS_PHONE_NUMBERS = "extra_has_phone_numbers";
-    private FastScroller fastScroller;
+
+    private FastScrollerView fastScroller;
+    private FastScrollerThumbView fastScrollerThumb;
     private TextView anchoredHeader;
     private RecyclerView recyclerView;
     private LinearLayoutManager manager;
     private ContactsAdapter adapter;
     private EmptyContentView emptyContentView;
+
+    // Map from indicator text (letter) to first adapter position for that letter
+    private final Map<String, Integer> indicatorIndexMap = new HashMap<>();
+
     /**
      * Listen to broadcast events about permissions in order to be notified if the READ_CONTACTS
      * permission is granted via the UI in another fragment.
@@ -170,7 +184,8 @@ public class ContactsFragment extends Fragment
     public View onCreateView(
             LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_contacts, container, false);
-        fastScroller = view.findViewById(R.id.fast_scroller);
+        fastScroller = view.findViewById(R.id.fastscroller);
+        fastScrollerThumb = view.findViewById(R.id.fastscroller_thumb);
         anchoredHeader = view.findViewById(R.id.header);
         recyclerView = view.findViewById(R.id.recycler_view);
         adapter =
@@ -184,10 +199,14 @@ public class ContactsFragment extends Fragment
                         super.onLayoutChildren(recycler, state);
                         int itemsShown = findLastVisibleItemPosition() - findFirstVisibleItemPosition() + 1;
                         if (adapter.getItemCount() > itemsShown) {
-                            fastScroller.setVisibility(View.VISIBLE);
+                            if (fastScroller != null) {
+                                fastScroller.setVisibility(View.VISIBLE);
+                            }
                             recyclerView.setOnScrollChangeListener(ContactsFragment.this);
                         } else {
-                            fastScroller.setVisibility(View.GONE);
+                            if (fastScroller != null) {
+                                fastScroller.setVisibility(View.GONE);
+                            }
                         }
                     }
                 };
@@ -248,7 +267,105 @@ public class ContactsFragment extends Fragment
             adapter.updateCursor(cursor);
 
             PerformanceReport.logOnScrollStateChange(recyclerView);
-            fastScroller.setup(adapter, manager);
+
+            // Build fast-scroller index map and attach scroller
+            recyclerView.post(new Runnable() {
+                @Override
+                public void run() {
+                    final int itemCount = adapter.getItemCount();
+                    indicatorIndexMap.clear();
+                    for (int i = 0; i < itemCount; i++) {
+                        String header = adapter.getHeaderString(i);
+                        if (header == null) continue;
+                        // use uppercase single-char header as key
+                        String key = header.trim().isEmpty() ? "#" : header.substring(0, 1).toUpperCase();
+                        if (!indicatorIndexMap.containsKey(key)) {
+                            indicatorIndexMap.put(key, i);
+                        }
+                    }
+
+                    boolean needFast = recyclerView.computeVerticalScrollRange() > recyclerView.getHeight();
+                    if (needFast && fastScroller != null && fastScrollerThumb != null) {
+
+                        // Provider: given a position, return the indicator item (Text)
+                        final Function1<Integer, FastScrollItemIndicator> provider = new Function1<Integer, FastScrollItemIndicator>() {
+                            @Override
+                            public FastScrollItemIndicator invoke(Integer position) {
+                                String headerString = adapter.getHeaderString(position);
+                                String text = "#";
+                                if (headerString != null && !headerString.isEmpty()) {
+                                    text = headerString.substring(0, 1).toUpperCase();
+                                }
+                                return new FastScrollItemIndicator.Text(text);
+                            }
+                        };
+                        fastScroller.setupWithRecyclerView(recyclerView, provider);
+
+                        fastScrollerThumb.setupWithFastScroller(fastScroller);
+
+                        // Use public setter to disable default scroller and use custom behavior
+                        try {
+                            fastScroller.setUseDefaultScroller(false);
+                        } catch (Throwable ignored) {
+                            // if method signature differs, ignore — behaviour may still be acceptable
+                        }
+
+                        // Register selection callback through public getter and add
+                        try {
+                            fastScroller.getItemIndicatorSelectedCallbacks().add(new FastScrollerView.ItemIndicatorSelectedCallback() {
+                                @Override
+                                public void onItemIndicatorSelected(FastScrollItemIndicator indicator, int indicatorCenterY, int itemPosition) {
+
+                                    // Try to extract the indicator text via public getter
+                                    String indicatorText = null;
+                                    if (indicator instanceof FastScrollItemIndicator.Text) {
+                                        try {
+                                            indicatorText = ((FastScrollItemIndicator.Text) indicator).getText();
+                                        } catch (Throwable t) {
+                                            // can't extract text; leave null and fallback to itemPosition mapping
+                                            indicatorText = null;
+                                        }
+                                    }
+
+                                    int targetPos = RecyclerView.NO_POSITION;
+
+                                    if (indicatorText != null) {
+                                        indicatorText = indicatorText.trim().toUpperCase();
+                                        Integer mapped = indicatorIndexMap.get(indicatorText);
+                                        if (mapped != null) {
+                                            targetPos = mapped;
+                                        }
+                                    }
+
+                                    // Fallback: use adapter-derived header for provided itemPosition to obtain a precise start pos
+                                    if (targetPos == RecyclerView.NO_POSITION && itemPosition >= 0 && itemPosition < itemCount) {
+                                        String derivedHeader = adapter.getHeaderString(itemPosition);
+                                        if (derivedHeader != null && !derivedHeader.isEmpty()) {
+                                            Integer mapped = indicatorIndexMap.get(derivedHeader.substring(0, 1).toUpperCase());
+                                            if (mapped != null) {
+                                                targetPos = mapped;
+                                            } else {
+                                                targetPos = itemPosition;
+                                            }
+                                        } else {
+                                            targetPos = itemPosition;
+                                        }
+                                    }
+
+                                    if (targetPos != RecyclerView.NO_POSITION) {
+                                        // Immediate jump to make scroller very responsive
+                                        manager.scrollToPositionWithOffset(targetPos, 0);
+                                    }
+                                }
+                            });
+                        } catch (Throwable ignored) {
+                            // If the library API differs, we can't register; best-effort only.
+                        }
+                    } else if (fastScroller != null) {
+                        fastScroller.setVisibility(View.GONE);
+                    }
+                }
+            });
         }
     }
 
@@ -257,6 +374,7 @@ public class ContactsFragment extends Fragment
         recyclerView.setAdapter(null);
         recyclerView.setOnScrollChangeListener(null);
         adapter = null;
+        indicatorIndexMap.clear();
     }
 
     /*
@@ -271,7 +389,6 @@ public class ContactsFragment extends Fragment
      */
     @Override
     public void onScrollChange(View v, int scrollX, int scrollY, int oldScrollX, int oldScrollY) {
-        fastScroller.updateContainerAndScrollBarPosition(recyclerView);
         int firstVisibleItem = manager.findFirstVisibleItemPosition();
         int firstCompletelyVisible = manager.findFirstCompletelyVisibleItemPosition();
         if (firstCompletelyVisible == RecyclerView.NO_POSITION) {
@@ -285,7 +402,7 @@ public class ContactsFragment extends Fragment
         if (listener != null) {
             listener.onContactsListScrolled(
                     recyclerView.getScrollState() == RecyclerView.SCROLL_STATE_DRAGGING
-                            || fastScroller.isDragStarted());
+            );
         }
 
         // If the user swipes to the top of the list very quickly, there is some strange behavior
@@ -400,4 +517,4 @@ public class ContactsFragment extends Fragment
     public interface OnContactsFragmentHiddenChangedListener {
         void onContactsFragmentHiddenChanged(boolean hidden);
     }
-        }
+    }
