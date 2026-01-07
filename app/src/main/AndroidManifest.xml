@@ -73,9 +73,7 @@
     <!-- Permission for managing own calls -->
     <uses-permission android:name="android.permission.MANAGE_OWN_CALLS" />
 
-    <meta-data
-        android:name="com.google.android.backup.api_key"
-        android:value="AEdPqrEAAAAIn3-Y3JKit1mrzfvcdbVhUiJn2ICtKfhGYLy0Bg" />
+  
 
     <uses-permission android:name="com.cequint.ecid.CALLER_ID_LOOKUP" />
     <uses-permission android:name="com.motorola.incallui.permission.INCOMING_CALL_VISIBILITY_CHANGED" />
