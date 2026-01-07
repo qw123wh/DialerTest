@@ -51,8 +51,7 @@ public class TranscriptionConfigProvider {
         // Android API key restricted to com.google.android.dialer
         return ConfigProviderComponent.get(context)
                 .getConfigProvider()
-                .getString(
-                        "voicemail_transcription_client_api_key");
+    
     }
 
     public String getAuthToken() {
