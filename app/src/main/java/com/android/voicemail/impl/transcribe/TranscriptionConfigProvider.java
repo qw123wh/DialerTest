@@ -52,7 +52,7 @@ public class TranscriptionConfigProvider {
         return ConfigProviderComponent.get(context)
                 .getConfigProvider()
                 .getString(
-                        "voicemail_transcription_client_api_key", "AIzaSyAXdDnif6B7sBYxU8hzw9qAp3pRPVHs060");
+                        "voicemail_transcription_client_api_key");
     }
 
     public String getAuthToken() {
