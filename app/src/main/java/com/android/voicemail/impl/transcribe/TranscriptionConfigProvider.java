@@ -47,16 +47,7 @@ public class TranscriptionConfigProvider {
                         "voicemail_transcription_server_address", "voicemailtranscription-pa.googleapis.com");
     }
 
-    public String getApiKey() {
-        // Android API key restricted to com.google.android.dialer
-        return ConfigProviderComponent.get(context)
-                .getConfigProvider()
-    
-    }
-
-    public String getAuthToken() {
-        return null;
-    }
+      
 
     public boolean shouldUsePlaintext() {
         return ConfigProviderComponent.get(context)
