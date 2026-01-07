@@ -179,7 +179,7 @@ public final class SearchBarView extends FrameLayout {
                     public void onAnimationEnd(Animator animation) {
                         super.onAnimationEnd(animation);
                         searchBox.setText("");
-                        searchBoxExpanded.setVisibility(INVISIBLE)
+                        searchBoxExpanded.setVisibility(INVISIBLE);
                     }
                 });
         animator.start();
