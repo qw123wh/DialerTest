@@ -12,7 +12,7 @@
     <color name="background_item_grey_pressed">#ffe0e0e0</color>
     <color name="blocked_contact_background">#ffa52714</color>
     <color name="blue_grey_100">#ffcfd8dc</color>
-    <color name="call_accept_background">#ff00c853</color>
+    <color name="call_accept_background">#00C853</color>
     <color name="call_composer_background_color">#7f000000</color>
     <color name="call_composer_divider">#12000000</color>
     <color name="call_hangup_background">#ffdf0000</color>
@@ -25,14 +25,14 @@
     <color name="conference_call_manager_caller_name_text_color">#ff4d4d4d</color>
     <color name="conference_call_manager_secondary_text_color">#ff999999</color>
     <color name="dialer_background_color">#fffafafa</color>
-    <color name="dialer_call_green">#ff00c853</color>
+    <color name="dialer_call_green">#3ee0a0</color>
     <color name="dialer_dark_secondary_color">#ff5195ea</color>
     <color name="dialer_dark_theme_color">#ff5195ea</color>
     <color name="dialer_dark_theme_color_20pct">#335195ea</color>
     <color name="dialer_dark_theme_color_dark">#ff2374ce</color>
     <color name="dialer_divider_line_color">#ffd8d8d8</color>
-    <color name="dialer_end_call_button_color">#ffbd2a2a</color>
-    <color name="dialer_link_color">#ff2a56c6</color>
+    <color name="dialer_end_call_button_color">#e46962</color>
+    <color name="dialer_link_color">#b5c4ff</color>
     <color name="dialer_red">#ffc53929</color>
     <color name="dialer_secondary_color">#fff50057</color>
     <color name="dialer_snackbar_action_text_color">#ff4285f4</color>
@@ -68,11 +68,11 @@
     <color name="incoming_answer_icon">#ff00c853</color>
     <color name="letter_tile_default_color">#ffcccccc</color>
     <color name="letter_tile_font_color">#ffffffff</color>
-    <color name="notification_action_accept">#ff097138</color>
-    <color name="notification_action_answer_video">#ff097138</color>
+    <color name="notification_action_accept">#097138</color>
+    <color name="notification_action_answer_video">#097138</color>
     <color name="notification_action_color_filter">@color/secondary_text_default_material_light
     </color>
-    <color name="notification_action_dismiss">#ffa52714</color>
+    <color name="notification_action_dismiss">#A52714</color>
     <color name="notification_icon_bg_color">#ff9e9e9e</color>
     <color name="notification_material_background_media_default_color">#ff424242</color>
     <color name="paginator_dot">#ffffffff</color>
