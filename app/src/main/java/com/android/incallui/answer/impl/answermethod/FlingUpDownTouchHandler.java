@@ -310,17 +310,15 @@ class FlingUpDownTouchHandler implements OnTouchListener {
     }
 
     private boolean isFalseTouch() {
-        if (falsingManager != null && falsingManager.isEnabled()) {
-            if (falsingManager.isFalseTouch()) {
-            return !touchAboveFalsingThreshold;
-    }
+    return !touchAboveFalsingThreshold;
+  }
 
-    private void trackMovement(MotionEvent event) {
-        if (velocityTracker != null) {
-            velocityTracker.addMovement(event);
-        }
+  private void trackMovement(MotionEvent event) {
+    if (velocityTracker != null) {
+      velocityTracker.addMovement(event);
     }
-
+  }
+    
     private void fling(float velocity, @FlingTarget int target, boolean centerBecauseOfFalsing) {
         ValueAnimator animator = createProgressAnimator(target);
         if (target == FlingTarget.CENTER) {
